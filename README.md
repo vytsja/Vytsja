@@ -1,3 +1,4 @@
+<div>
   <div className="flex justify-between items-center mb-4">
     <button
       className="bg-blue-600 text-white px-4 py-2 rounded shadow"
@@ -25,7 +26,7 @@
         setWeeks(ws => ws.map((w, i) => (i === currentWeekIdx ? d : w)))
       }
     />
-  ) : (
+    ) : (
     <div className="text-slate-400 text-center">Виберіть або додайте тиждень.</div>
   )}
 </div>
