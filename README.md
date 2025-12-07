@@ -1,133 +1,137 @@
-# Pizza Bobo - Inventory Management System
+# Vytsja - Бюджетний Контроль
 
-A comprehensive Python-based inventory and cost management system for pizza restaurant operations.
+Google Apps Script для автоматизації фінансового обліку в Google Sheets з підтримкою української мови та чеської валюти (CZK).
 
-## Overview
+## Функціонал
 
-This system helps manage pizza restaurant operations by:
-- Tracking ingredient inventory levels
-- Calculating food costs per pizza type
-- Managing daily sales and profit margins
-- Generating detailed Excel reports
+### buildBudget()
+Основна функція, яка створює повноцінний бюджетний лист з наступними можливостями:
 
-## Features
+#### 📊 Структура листа "Бюджет"
 
-### Ingredient Management
-- Master database of 20 ingredients with:
-  - Unique IDs (ING001-ING020)
-  - Supplier information
-  - Unit prices (CZK)
-  - Min/Max stock levels
-  - Current inventory tracking
+1. **Налаштування (A1:F10)**
+   - Автоматичне визначення періоду (поточний місяць)
+   - Налаштування валюти (CZK)
+   - Резерв початковий та цільовий
 
-### Recipe Management (Normy)
-- Standardized recipes for 16 pizza types:
-  - Margherita, Olivová, Šunková, Capricciosa
-  - Hawai, Americana, Bobo, Salámová
-  - Ďábelská, Farmářská, Sedlácká, Špenátová
-  - Sýrová, Kuřecí, Pollo, Brusinková
-- Precise ingredient quantities in grams per pizza
+2. **🟢 Доходи (A12:F18)**
+   - Категорії: Зарплата/Чайові, Підробіток, Від сім'ї, Повернення боргів, Інші джерела
+   - Автоматичний розрахунок: План, Факт, Відхилення, %, Статус
 
-### Cost Analysis
-- Automated food cost calculation
-- Profit margin analysis
-- Sales tracking with revenue calculations
-- Price optimization insights
+3. **🔴 Витрати (A20:F32)**
+   - 11 категорій витрат: Оренда, Комунальні, Їжа, Транспорт, Дитина, Телефон, Курілки, Особисті, Борги, Непередбачені, Інше
+   - Автоматичний розрахунок з відстеженням перевитрат
 
-## Requirements
+4. **📝 Журнал транзакцій (A34:I200)**
+   - Поля: Дата, Тип, Автокатегорія, Сума, Опис, Оплата, Баланс, NET день, NET кумул.
+   - Автоматична категоризація за описом
+   - Фільтрація та сортування
+   - Фіксація заголовків
 
-- Python 3.11+
-- pandas
-- numpy
-- openpyxl
-- xlsxwriter
+5. **📊 Підсумки (A202:E210)**
+   - Загальний дохід
+   - Загальні витрати
+   - Чистий результат
+   - Резерв поточний
+   - До цілі резерву
 
-## Installation
+### CATEGORYZE(desc, amount)
+Користувацька функція для автоматичної категоризації транзакцій на основі:
+- Ключових слів в описі (тексту)
+- Суми транзакції
+- Розпізнавання популярних магазинів та послуг
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd Vytsja
+**Приклади розпізнавання:**
+- "оренда" або "rent" + сума > 15000 → 🏠 Оренда
+- "tesco", "albert", "billa", "lidl", "penny" → 🍕 Їжа
+- "телефон", "o2", "vodafone" + 200-800 CZK → 📱 Телефон/Зв'язок
+- "садок", "školka", "kindergarten" → 👶 Дитина
+- Інше → 🛒 Інше
+
+## Технічні особливості
+
+### Іменовані діапазони
+- `TR_DATE`, `TR_TYPE`, `TR_CAT`, `TR_AMOUNT`, `TR_DESC`, `TR_PAY`, `TR_BAL`, `TR_NET_DAY`, `TR_NET_CUM`
+- Використовуються у формулах SUMIFS для автоматичних підрахунків
+
+### Валідація даних
+- **Тип транзакції**: Дохід/Витрата (обов'язково)
+- **Оплата**: Готівка/Картка/Змішано
+- **Сума**: Тільки числа > 0
+- **Дата**: Формат yyyy-mm-dd
+
+### Умовне форматування
+- ✅ Доходи >= 90% плану → зелений текст
+- ⚠️ Витрати > 120% плану → червона заливка
+- 💰 Транзакції > 10,000 CZK → жовта заливка
+
+### Формати
+- **Валюта**: CZK без копійок ([CZK] #,##0)
+- **Локаль**: en_US (коми в формулах)
+- **Часовий пояс**: Europe/Prague
+- **Дата**: yyyy-mm-dd
+
+## Встановлення
+
+1. Відкрийте Google Sheets
+2. Перейдіть в **Розширення** → **Apps Script**
+3. Скопіюйте вміст файлу `Code.gs`
+4. Збережіть проект
+5. Запустіть функцію `buildBudget()`
+
+## Використання
+
+### Перший запуск
+```javascript
+buildBudget()
 ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
+Це створить новий лист "Бюджет" з усіма налаштуваннями.
+
+### Додавання транзакцій
+1. Перейдіть до секції "📝 ЖУРНАЛ ТРАНЗАКЦІЙ" (рядок 36+)
+2. Заповніть:
+   - **Дата**: у форматі yyyy-mm-dd
+   - **Тип**: Дохід або Витрата
+   - **Сума**: позитивне число
+   - **Опис**: текстовий опис
+   - **Оплата**: Готівка/Картка/Змішано
+3. **Автокатегорія** визначиться автоматично
+4. **Баланс** та **NET** розрахуються автоматично
+
+### Налаштування плану
+1. У секції "🟢 ДОХОДИ" заповніть стовпець "План" (B14:B18)
+2. У секції "🔴 ВИТРАТИ" заповніть стовпець "План" (B22:B32)
+3. Статус виконання буде оновлюватись автоматично
+
+## Формули та автоматизація
+
+### Автоматичний розрахунок факту
+```javascript
+=SUMIFS(TR_AMOUNT,TR_TYPE,"Дохід",TR_CAT,$A14)
 ```
 
-## Usage
+### Відстеження статусу
+- Доходи: ✅ якщо >= 90%, інакше ⚠️
+- Витрати: ✅ якщо <= 100%, інакше ⚠️
 
-Run the script to generate the inventory Excel file:
-
-```bash
-python3 pizza_inventory.py
+### Баланс
+```javascript
+=IF($B36="Дохід",G35+$D36,G35-$D36)
 ```
 
-This will create `PizzaBobo_Inventura_FIXED.xlsx` with three worksheets:
-
-1. **Denní prodej** - Daily sales tracking with:
-   - Pizza type and quantity sold
-   - Sale price and total revenue
-   - Food cost per unit
-   - Profit and margin percentage
-
-2. **Normy (Fixed)** - Complete recipe specifications with full ingredient names
-
-3. **Ingredience** - Master ingredient database
-
-## Example Output
-
-```
-Файл 'PizzaBobo_Inventura_FIXED.xlsx' успішно створено!
-
---- ПРИКЛАД РОЗРАХУНКУ (Margherita) ---
-Собівартість Margherita: 19.13 Kč
-(90г соусу * 27.2 + 120г моцарели * 139)
+### NET за день
+```javascript
+=SUMIFS(TR_AMOUNT,TR_DATE,$A36,TR_TYPE,"Дохід")-SUMIFS(TR_AMOUNT,TR_DATE,$A36,TR_TYPE,"Витрата")
 ```
 
-### Sample Calculations
+## Підтримка
 
-**Margherita Pizza:**
-- 90g Sugo Solana @ 27.2 Kč/kg = 2.45 Kč
-- 120g Mozzarella @ 139 Kč/kg = 16.68 Kč
-- **Total Food Cost: 19.13 Kč**
-- Sale Price: 215 Kč
-- **Profit Margin: 91.1%**
+- Локаль: Українська
+- Валюта: Чеська крона (CZK)
+- Часовий пояс: Центральноєвропейський (Prague)
+- Формат дати: ISO 8601 (yyyy-mm-dd)
 
-## Data Structure
+## Ліцензія
 
-### Ingredients Table
-| Field | Description |
-|-------|-------------|
-| ID | Unique identifier (ING001-ING020) |
-| Název | Ingredient name (Czech) |
-| Dodavatel | Supplier name |
-| Jedn. | Unit of measurement (kg/l) |
-| Cena | Price per unit (CZK) |
-| MIN | Minimum stock level |
-| MAX | Maximum stock level |
-| Aktuální | Current stock level |
-
-### Recipe Mapping
-The system uses a smart mapping dictionary to convert abbreviated ingredient names to full names:
-- `Sugo` → `Sugo Solana`
-- `Smeta` → `Smetana 20%`
-- `Mozza` → `Mozzarella La Giusta`
-- And more...
-
-## Customization
-
-To modify the system:
-
-1. **Update ingredients**: Edit `ingredients_data` dictionary
-2. **Add new pizzas**: Add entries to `normy_data` and `pizza_prices`
-3. **Adjust recipes**: Modify ingredient quantities in `normy_data`
-4. **Change formatting**: Update Excel formatting in the writer section
-
-## License
-
-This project is provided as-is for restaurant inventory management purposes.
-
-## Author
-
-Created for Pizza Bobo restaurant operations.
+Вільне використання та модифікація для особистих потреб.
